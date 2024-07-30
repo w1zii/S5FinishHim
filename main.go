@@ -137,7 +137,7 @@ type Swimming struct {
 
 // meanSpeed возвращает среднюю скорость при плавании.
 func (s Swimming) meanSpeed() float64 {
-	return (s.LengthPool * s.CountPool / MInKm / s.Duration.Hours())
+	return float64(s.LengthPool * s.CountPool / MInKm / s.Duration.Hours())
 }
 
 // Calories возвращает количество калорий, потраченных при плавании.
