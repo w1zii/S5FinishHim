@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"time"
 )
 
@@ -24,19 +25,19 @@ type Training struct {
 
 // distance возвращает дистанцию, которую преодолел пользователь.
 func (t Training) distance() float64 {
-	// вставьте ваш код ниже
 	return float64(t.Action) * t.LenStep / MInKm
 }
 
 // meanSpeed возвращает среднюю скорость бега или ходьбы.
 func (t Training) meanSpeed() float64 {
-	// вставьте ваш код ниже
-	return t.distance() / (t.Duration.Hours())
+	if t.Duration == 0 {
+		return 0
+	}
+	return t.distance() / t.Duration.Hours()
 }
 
 // Calories возвращает количество потраченных килокалорий на тренировке.
 func (t Training) Calories() float64 {
-	// вставьте ваш код ниже
 	return 0
 }
 
@@ -113,7 +114,8 @@ type Walking struct {
 
 // Calories возвращает количество потраченных килокалорий при ходьбе.
 func (w Walking) Calories() float64 {
-	return (CaloriesWeightMultiplier*w.Weight + (w.meanSpeed()*KmHInMsec*w.meanSpeed()*KmHInMsec/w.Height)*CaloriesSpeedHeightMultiplier*w.Weight*w.Duration.Hours()*MinInHours)
+	vSr := w.meanSpeed() * KmHInMsec
+	return CaloriesWeightMultiplier*w.Weight + (math.Pow(vSr, 2)/w.Height/CmInM)*CaloriesSpeedHeightMultiplier*w.Weight*w.Duration.Hours()*MinInHours
 }
 
 // TrainingInfo возвращает структуру InfoMessage с информацией о проведенной тренировке.
@@ -137,17 +139,31 @@ type Swimming struct {
 
 // meanSpeed возвращает среднюю скорость при плавании.
 func (s Swimming) meanSpeed() float64 {
-	return (float64(s.LengthPool) * float64(s.CountPool) / MInKm / s.Duration.Hours())
+	if s.Duration == 0 {
+		return 0
+	}
+	return float64(s.LengthPool) * float64(s.CountPool) / MInKm / s.Duration.Hours()
 }
 
 // Calories возвращает количество калорий, потраченных при плавании.
 func (s Swimming) Calories() float64 {
-	return ((s.meanSpeed() + SwimmingCaloriesMeanSpeedShift) * SwimmingCaloriesWeightMultiplier * s.Weight * s.Duration.Hours())
+	return (s.meanSpeed() + SwimmingCaloriesMeanSpeedShift) * SwimmingCaloriesWeightMultiplier * s.Weight * s.Duration.Hours()
 }
 
 // TrainingInfo returns info about swimming training.
 func (s Swimming) TrainingInfo() InfoMessage {
-	return s.Training.TrainingInfo()
+	avgSpeed := s.meanSpeed()
+	distance := s.distance()
+	calories := (avgSpeed + SwimmingCaloriesMeanSpeedShift) * SwimmingCaloriesWeightMultiplier * s.Weight * s.Duration.Hours()
+	info := InfoMessage{
+		TrainingType: s.TrainingType,
+		Duration:     s.Duration,
+		Distance:     distance,
+		Speed:        avgSpeed,
+		Calories:     calories,
+	}
+
+	return info
 }
 
 // ReadData возвращает информацию о проведенной тренировке.
